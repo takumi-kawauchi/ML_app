@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>モデル選択</title>
+</head>
+<body>
+    <h1>使用する機械学習モデルを選択してください</h1>
+
+    <form action="/train_model" method="post">  <!-- ここはPOSTメソッド -->
+        <h2>モデルの選択:</h2>
+        <label>
+            <input type="radio" name="model" value="SVM"> SVM (Support Vector Machine)
+        </label><br>
+        <label>
+            <input type="radio" name="model" value="RF"> RF (Random Forest)
+        </label><br>
+        <label>
+            <input type="radio" name="model" value="LGBM"> LGBM (Light Gradient Boosting Machine)
+        </label><br>
+        
+        <br>
+        <button type="submit">モデルを選択</button>
+    </form>
+
+    <br>
+    <a href="/process_variables">変数選択に戻る</a>
+
+</body>
+</html>

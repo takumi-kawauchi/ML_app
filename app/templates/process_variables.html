@@ -1,0 +1,82 @@
+<!-- templates/process_variables.html -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>欠損値とカテゴリカル変数の処理</title>
+</head>
+<body>
+    <h1>欠損値とカテゴリカル変数の処理</h1>
+    
+    <!-- 欠損値処理 -->
+    <h2>欠損値の処理</h2>
+    <form action="/handle_missing" method="post">
+        <table border="1">
+            <tr>
+                <th>変数</th>
+                <th>欠損値の数</th>
+                <th>処理方法</th>
+            </tr>
+            {% for feature, missing_count in missing_values.items() %}
+                <tr>
+                    <td>{{ feature }}</td>
+                    <td>{{ missing_count }}</td>
+                    <td>
+                        <label>
+                            <input type="radio" name="missing_{{ feature }}" value="mean"> 平均値で補完
+                        </label>
+                        <label>
+                            <input type="radio" name="missing_{{ feature }}" value="delete"> 削除
+                        </label>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+        <button type="submit">欠損値処理を実行</button>
+    </form>
+
+    <!-- メッセージ表示セクション -->
+    {% if message1 %}
+        <p style="color: green;">{{ message1 }}</p>
+    {% endif %}
+    
+    <!-- カテゴリカル変数の処理 -->
+    <h2>カテゴリカル変数の処理</h2>
+    <form action="/process_categorical" method="post">
+        <p>選択した変数の中にカテゴリカル変数が存在する場合、ワンホットエンコーディングにより数値変換を行います。</p>
+        <button type="submit">ワンホットエンコーディングを実行</button>
+    </form>
+
+    <!-- メッセージ表示セクション -->
+    {% if message2 %}
+        <p style="color: green;">{{ message2 }}</p>
+    {% endif %}
+
+    <h3>データの標準化または正規化</h3>
+    
+    <p>以下のオプションからどちらかを選択し、データの変換を行ってください。</p>
+    
+    <!-- 標準化ボタン -->
+    <form action="/standardize" method="post">
+        <button type="submit">標準化を実行</button>
+    </form>
+    
+    <!-- 正規化ボタン -->
+    <form action="/normalize" method="post">
+        <button type="submit">正規化を実行</button>
+    </form>
+
+    <!-- メッセージ表示セクション -->
+    {% if message3 %}
+        <p style="color: green;">{{ message3 }}</p>
+    {% endif %}
+
+    <!-- モデル選択に進むボタン -->
+    <form action="/select_model" method="post">
+        <button type="submit">モデル選択に進む</button>
+    </form>
+    
+    
+
+</body>
+</html>

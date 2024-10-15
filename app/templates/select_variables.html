@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>変数の選択</title>
+</head>
+<body>
+    <h1>説明変数と目的変数を選択してください</h1>
+    
+    <form action="/process_variables" method="post">
+        <h2>説明変数:</h2>
+        {% for column in columns %}
+            <label>
+                <input type="checkbox" name="features" value="{{ column }}"> {{ column }}
+            </label><br>
+        {% endfor %}
+        
+        <h2>目的変数:</h2>
+        <select name="target">
+            {% for column in columns %}
+                <option value="{{ column }}">{{ column }}</option>
+            {% endfor %}
+        </select>
+        
+        <br><br>
+        <button type="submit">選択</button>
+    </form>
+</body>
+</html>
