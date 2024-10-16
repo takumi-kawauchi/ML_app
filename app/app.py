@@ -51,20 +51,22 @@ def handle_missing():
     try:
         for feature in data.columns:
             handling_method = missing_handling.get(f'missing_{feature}')
-            
+
             if handling_method == 'mean':
                 data[feature].fillna(data[feature].mean(), inplace=True)
+                # inplace=Trueを用いることでデータフレームに直接的な変更が行われない可能性がある。そのため、以下のコードが勧められた。
+                # data[feature] = data[feature].fillna(data[feature].mean())
             elif handling_method == 'delete':
                 data.dropna(subset=[feature], inplace=True)
-        
+
         message = "欠損値の処理が成功しました。"
     except Exception as e:
         message = f"エラーが発生しました: {str(e)}"
-    
+
     # 欠損値のある変数とその数を再計算して渡す
     missing_values = data.isnull().sum()
     missing_values = missing_values[missing_values > 0].to_dict()
-    
+
     return render_template('process_variables.html', missing_values=missing_values, message1=message)
 
 @app.route('/process_categorical', methods=['POST'])
@@ -90,12 +92,15 @@ def process_categorical():
 @app.route('/standardize', methods=['POST'])
 def standardize():
     global data
+    data_columns = data.columns
     try:
         scaler = StandardScaler()
         data = scaler.fit_transform(data)
         message = "標準化が成功しました。"
     except Exception as e:
         message = f"エラーが発生しました: {str(e)}"
+    
+    data = pd.DataFrame(data, columns=data_columns)
     
     # 欠損値の再計算を行う
     #dataをDataFrameに変換
@@ -109,13 +114,16 @@ def standardize():
 @app.route('/normalize', methods=['POST'])
 def normalize():
     global data
+    data_columns = data.columns
     try:
         scaler = MinMaxScaler()
         data = scaler.fit_transform(data)
         message = "正規化が成功しました。"
     except Exception as e:
         message = f"エラーが発生しました: {str(e)}"
-    
+
+    data = pd.DataFrame(data, columns=data_columns)
+
     # 欠損値の再計算を行う
     data = pd.DataFrame(data)
     missing_values = data.isnull().sum()
@@ -133,9 +141,12 @@ def train_model_page():
 
 @app.route('/train_model', methods=['POST'])
 def train_model():
+    print(data)
     # ここでは POST メソッドでの処理を行います
     X = data.drop(target, axis=1)
     y = data[target]
+    print("X : ", X)
+    print("y : ", y)
     model_type = request.form['model']
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
