@@ -3,9 +3,10 @@ from flask import Flask, request, render_template, redirect, url_for, jsonify
 import pandas as pd
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.svm import SVC
-from lightgbm import LGBMRegressor
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.svm import SVC, SVR
+from lightgbm import LGBMRegressor, LGBMClassifier
+from sklearn.metrics import accuracy_score, root_mean_squared_error
 
 app = Flask(__name__)
 data = None  # グローバル変数にデータを格納
@@ -141,26 +142,37 @@ def train_model_page():
 
 @app.route('/train_model', methods=['POST'])
 def train_model():
-    print(data)
     # ここでは POST メソッドでの処理を行います
     X = data.drop(target, axis=1)
     y = data[target]
-    print("X : ", X)
-    print("y : ", y)
     model_type = request.form['model']
+    if "C" in model_type:
+        y = y.astype('category')
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-    if model_type == 'SVM':
-        model = SVC()
-    elif model_type == 'RF':
-        model = RandomForestClassifier()
-    elif model_type == 'LGBM':
+    
+    if model_type == 'SVM_R':
+        model = SVR()
+    elif model_type == 'RF_R':
+        model = RandomForestRegressor()
+    elif model_type == 'LGBM_R':
         model = LGBMRegressor()
+    elif model_type == 'SVM_C':
+        model = SVC()
+    elif model_type == 'RF_C':
+        model = RandomForestClassifier()
+    elif model_type == 'LGBM_C':
+        model = LGBMClassifier()
+
 
     model.fit(X_train, y_train)
-    score = model.score(X_test, y_test)
+    if "C" in model_type:
+        y_pred = model.predict(X_test)
+        score = accuracy_score(y_test, y_pred)
+    else:
+        y_pred = model.predict(X_test)
+        score = root_mean_squared_error(y_test, y_pred)
 
-    return render_template('train_model_result.html', model=model_type, score=score)  # 結果表示用のテンプレートを返す
+    return render_template('results.html', model=model_type, score=score)  # 結果表示用のテンプレートを返す
 
 
 if __name__ == '__main__':
