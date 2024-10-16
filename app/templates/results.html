@@ -7,7 +7,14 @@
 </head>
 <body>
     <h1>{{ model }} の結果</h1>
-    <p>モデルのスコア: {{ score }}</p>
+
+    
+    {% if 'C' in model %}
+        <p>正解率: {{ score }}%</p>
+    {% else %}
+        <p>RMSE: {{ score  }}</p>
+    {% endif %}
+
 
     <br>
     <a href="/train_model">モデル選択に戻る</a>

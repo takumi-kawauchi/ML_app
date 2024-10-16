@@ -10,15 +10,23 @@
     <form action="/train_model" method="post">  <!-- ここはPOSTメソッド -->
         <h2>モデルの選択:</h2>
         <label>
-            <input type="radio" name="model" value="SVM"> SVM (Support Vector Machine)
+            <input type="radio" name="model" value="SVM_R"> SVM_Regressor
         </label><br>
         <label>
-            <input type="radio" name="model" value="RF"> RF (Random Forest)
+            <input type="radio" name="model" value="RF_R"> RF_Regressor
         </label><br>
         <label>
-            <input type="radio" name="model" value="LGBM"> LGBM (Light Gradient Boosting Machine)
+            <input type="radio" name="model" value="LGBM_R"> LGBM_Regressor
         </label><br>
-        
+        <label>
+            <input type="radio" name="model" value="SVM_C"> SVM_Classifier
+        </label><br>
+        <label>
+            <input type="radio" name="model" value="RF_C"> RF_Classifier
+        </label><br>
+        <label>
+            <input type="radio" name="model" value="LGBM_C"> LGBM_Classifier
+        </label>
         <br>
         <button type="submit">モデルを選択</button>
     </form>
