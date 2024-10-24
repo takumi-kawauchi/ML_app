@@ -1,17 +1,118 @@
-<!-- templates/process_variables.html -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>欠損値とカテゴリカル変数の処理</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f7f9;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1, h2, h3 {
+            color: #333;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #444;
+        }
+
+        h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        input[type="radio"] {
+            margin-right: 8px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            font-size: 16px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: block;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        p {
+            font-size: 16px;
+            color: #555;
+            text-align: center;
+        }
+
+        form {
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .message {
+            color: green;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 20px;
+            }
+
+            table {
+                font-size: 14px;
+            }
+
+            button {
+                font-size: 14px;
+            }
+        }
+    </style>
 </head>
 <body>
     <h1>欠損値とカテゴリカル変数の処理</h1>
-    
+
     <!-- 欠損値処理 -->
     <h2>欠損値の処理</h2>
     <form action="/handle_missing" method="post">
-        <table border="1">
+        <table>
             <tr>
                 <th>変数</th>
                 <th>欠損値の数</th>
@@ -37,9 +138,9 @@
 
     <!-- メッセージ表示セクション -->
     {% if message1 %}
-        <p style="color: green;">{{ message1 }}</p>
+        <p class="message">{{ message1 }}</p>
     {% endif %}
-    
+
     <!-- カテゴリカル変数の処理 -->
     <h2>カテゴリカル変数の処理</h2>
     <form action="/process_categorical" method="post">
@@ -49,34 +150,30 @@
 
     <!-- メッセージ表示セクション -->
     {% if message2 %}
-        <p style="color: green;">{{ message2 }}</p>
+        <p class="message">{{ message2 }}</p>
     {% endif %}
 
+    <!-- 標準化・正規化処理 -->
     <h3>データの標準化または正規化</h3>
-    
     <p>以下のオプションからどちらかを選択し、データの変換を行ってください。</p>
-    
-    <!-- 標準化ボタン -->
+
     <form action="/standardize" method="post">
         <button type="submit">標準化を実行</button>
     </form>
-    
-    <!-- 正規化ボタン -->
+
     <form action="/normalize" method="post">
         <button type="submit">正規化を実行</button>
     </form>
 
     <!-- メッセージ表示セクション -->
     {% if message3 %}
-        <p style="color: green;">{{ message3 }}</p>
+        <p class="message">{{ message3 }}</p>
     {% endif %}
 
     <!-- モデル選択に進むボタン -->
     <form action="/select_model" method="post">
         <button type="submit">モデル選択に進む</button>
     </form>
-    
-    
 
 </body>
 </html>
