@@ -2,37 +2,162 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>モデル選択</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f7f9;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            color: #444;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .form-section {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        input[type="radio"] {
+            margin-right: 8px;
+        }
+
+        select, button {
+            width: 100%;
+            font-size: 16px;
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        a {
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            color: #4CAF50;
+            margin-top: 15px;
+            font-size: 16px;
+        }
+
+        a:hover {
+            color: #45a049;
+        }
+
+        .model-options {
+            display: none;
+            margin-top: 15px;
+        }
+    </style>
 </head>
 <body>
-    <h1>使用する機械学習モデルを選択してください</h1>
+    <div class="container">
+        <h1>使用する機械学習モデルを選択してください</h1>
 
-    <form action="/train_model" method="post">  <!-- ここはPOSTメソッド -->
-        <h2>モデルの選択:</h2>
-        <label>
-            <input type="radio" name="model" value="SVM_R"> SVM_Regressor
-        </label><br>
-        <label>
-            <input type="radio" name="model" value="RF_R"> RF_Regressor
-        </label><br>
-        <label>
-            <input type="radio" name="model" value="LGBM_R"> LGBM_Regressor
-        </label><br>
-        <label>
-            <input type="radio" name="model" value="SVM_C"> SVM_Classifier
-        </label><br>
-        <label>
-            <input type="radio" name="model" value="RF_C"> RF_Classifier
-        </label><br>
-        <label>
-            <input type="radio" name="model" value="LGBM_C"> LGBM_Classifier
-        </label>
-        <br>
-        <button type="submit">モデルを選択</button>
-    </form>
+        <!-- ドロップダウンで分類系 or 回帰系を選択 -->
+        <div class="form-section">
+            <form id="modelForm" action="/train_model" method="post">
+                <h2>モデルカテゴリの選択:</h2>
+                <select id="modelCategory" name="category">
+                    <option value="">選択してください</option>
+                    <option value="regression">回帰系モデル</option>
+                    <option value="classification">分類系モデル</option>
+                </select>
 
-    <br>
-    <a href="/process_variables">変数選択に戻る</a>
+                <!-- 回帰系モデルの選択肢 -->
+                <div id="regressionOptions" class="model-options">
+                    <h2>回帰系モデル:</h2>
+                    <label>
+                        <input type="radio" name="model" value="SVM_R"> SVM_Regressor
+                    </label>
+                    <label>
+                        <input type="radio" name="model" value="RF_R"> RF_Regressor
+                    </label>
+                    <label>
+                        <input type="radio" name="model" value="LGBM_R"> LGBM_Regressor
+                    </label>
+                </div>
 
+                <!-- 分類系モデルの選択肢 -->
+                <div id="classificationOptions" class="model-options">
+                    <h2>分類系モデル:</h2>
+                    <label>
+                        <input type="radio" name="model" value="SVM_C"> SVM_Classifier
+                    </label>
+                    <label>
+                        <input type="radio" name="model" value="RF_C"> RF_Classifier
+                    </label>
+                    <label>
+                        <input type="radio" name="model" value="LGBM_C"> LGBM_Classifier
+                    </label>
+                </div>
+
+                <!-- モデルを選択するボタン -->
+                <button type="submit">モデルを選択</button>
+            </form>
+        </div>
+
+        <!-- 変数選択に戻るボタン -->
+        <a href="/process_variables">変数選択に戻る</a>
+    </div>
+
+    <script>
+        // ドロップダウン選択に基づいてモデル選択肢を表示/非表示にする
+        document.getElementById('modelCategory').addEventListener('change', function() {
+            var category = this.value;
+            var regressionOptions = document.getElementById('regressionOptions');
+            var classificationOptions = document.getElementById('classificationOptions');
+
+            // 選択肢のリセット
+            regressionOptions.style.display = 'none';
+            classificationOptions.style.display = 'none';
+
+            // 選択に応じて適切なモデルを表示
+            if (category === 'regression') {
+                regressionOptions.style.display = 'block';
+            } else if (category === 'classification') {
+                classificationOptions.style.display = 'block';
+            }
+        });
+    </script>
 </body>
 </html>
