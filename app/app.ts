@@ -1,9 +1,10 @@
 import express from 'express';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { exec } from 'child_process';
 import path from 'path';
 import multer from 'multer';
 import fs from 'fs';
+import { Request } from 'multer';
 
 const app = express();
 const port = 3000;
