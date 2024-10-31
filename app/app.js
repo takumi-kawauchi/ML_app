@@ -32,6 +32,7 @@ app.post('/upload', upload.single('file'), (req, res) => {
     }
 });
 app.get('/select_variables', (req, res) => {
+    res.sendFile(path_1.default.join(__dirname, 'templates', 'select_variables.html'));
     if (dataFilePath) {
         (0, child_process_1.exec)(`python scripts/get_columns.py ${dataFilePath}`, (error, stdout, stderr) => {
             if (error) {
@@ -47,6 +48,19 @@ app.get('/select_variables', (req, res) => {
         res.status(400).send('No data file uploaded');
     }
 });
+
+app.post('/select_variables', (req, res) => {
+    selectedFeatures = req.body.features;
+    targetVariable = req.body.target;
+    res.redirect('/process_variables');
+}
+);
+
+app.get('/process_variables', (req, res) => {
+    res.sendFile(path_1.default.join(__dirname, 'templates', 'process_variables.html'));
+}
+);
+
 app.post('/process_variables', (req, res) => {
     if (dataFilePath) {
         selectedFeatures = req.body.features;
@@ -65,6 +79,7 @@ app.post('/process_variables', (req, res) => {
         res.status(400).send('No data file uploaded');
     }
 });
+
 app.post('/handle_missing', (req, res) => {
     if (dataFilePath) {
         const missingHandling = req.body;
