@@ -9,6 +9,10 @@ const path_1 = __importDefault(require("path"));
 const multer_1 = __importDefault(require("multer"));
 const app = (0, express_1.default)();
 const port = 3000;
+
+app.set('view engine', 'ejs');
+app.set('views', path_1.default.join(__dirname, 'templates'));
+
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use(express_1.default.json());
 const upload = (0, multer_1.default)({ dest: 'uploads/' });
