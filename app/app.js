@@ -32,7 +32,6 @@ app.post('/upload', upload.single('file'), (req, res) => {
     }
 });
 app.get('/select_variables', (req, res) => {
-    res.sendFile(path_1.default.join(__dirname, 'templates', 'select_variables.html'));
     if (dataFilePath) {
         (0, child_process_1.exec)(`python scripts/get_columns.py ${dataFilePath}`, (error, stdout, stderr) => {
             if (error) {
@@ -57,7 +56,20 @@ app.post('/select_variables', (req, res) => {
 );
 
 app.get('/process_variables', (req, res) => {
-    res.sendFile(path_1.default.join(__dirname, 'templates', 'process_variables.html'));
+    if (dataFilePath) {
+        (0, child_process_1.exec)(`python scripts/process_variables.py ${dataFilePath} ${selectedFeatures.join(',')} ${targetVariable}`, (error, stdout, stderr) => {
+            if (error) {
+                res.status(500).send(`Error: ${stderr}`);
+            }
+            else {
+                const missingValues = JSON.parse(stdout);
+                res.render('process_variables', { missingValues, features: selectedFeatures, target: targetVariable });
+            }
+        });
+    }
+    else {
+        res.status(400).send('No data file uploaded');
+    }
 }
 );
 
@@ -89,7 +101,7 @@ app.post('/handle_missing', (req, res) => {
             }
             else {
                 const missingValues = JSON.parse(stdout);
-                res.render('process_variables', { missingValues, message1: '欠損値の処理が成功しました。' });
+                res.render('process_variables', { missingValues, message1: '欠損値の処理が成功しました。', features: selectedFeatures, target: targetVariable });
             }
         });
     }
@@ -105,7 +117,7 @@ app.post('/process_categorical', (req, res) => {
             }
             else {
                 const missingValues = JSON.parse(stdout);
-                res.render('process_variables', { missingValues, message2: 'ワンホットエンコーディングが成功しました。' });
+                res.render('process_variables', { missingValues, message2: 'ワンホットエンコーディングが成功しました。', features: selectedFeatures, target: targetVariable });
             }
         });
     }
@@ -121,7 +133,7 @@ app.post('/standardize', (req, res) => {
             }
             else {
                 const missingValues = JSON.parse(stdout);
-                res.render('process_variables', { missingValues, message3: '標準化が成功しました。' });
+                res.render('process_variables', { missingValues, message3: '標準化が成功しました。', features: selectedFeatures, target: targetVariable });
             }
         });
     }
@@ -137,7 +149,7 @@ app.post('/normalize', (req, res) => {
             }
             else {
                 const missingValues = JSON.parse(stdout);
-                res.render('process_variables', { missingValues, message3: '正規化が成功しました。' });
+                res.render('process_variables', { missingValues, message3: '正規化が成功しました。', features: selectedFeatures, target: targetVariable });
             }
         });
     }
