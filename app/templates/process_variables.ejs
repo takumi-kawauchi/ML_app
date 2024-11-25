@@ -137,7 +137,7 @@
     </form>
 
     <!-- メッセージ表示セクション -->
-    <% if (message1) { %>
+    <% if (typeof message1 !== "undefined" && message1) { %>
         <p class="message"><%= message1 %></p>
     <% } %>
 
@@ -149,9 +149,10 @@
     </form>
 
     <!-- メッセージ表示セクション -->
-    <% if (message2) { %>
+    <% if (typeof message2 !== "undefined" && message2) { %>
         <p class="message"><%= message2 %></p>
     <% } %>
+
 
     <!-- 標準化・正規化処理 -->
     <h3>データの標準化または正規化</h3>
@@ -166,7 +167,7 @@
     </form>
 
     <!-- メッセージ表示セクション -->
-    <% if (message3) { %>
+    <% if (typeof message3 !== "undefined" && message3) { %>
         <p class="message"><%= message3 %></p>
     <% } %>
 

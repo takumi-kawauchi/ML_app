@@ -1,210 +1,238 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = __importDefault(require("express"));
-const child_process_1 = require("child_process");
-const path_1 = __importDefault(require("path"));
-const multer_1 = __importDefault(require("multer"));
-const app = (0, express_1.default)();
+const express = require("express");
+const { exec } = require("child_process");
+const path = require("path");
+const multer = require("multer");
+
+const app = express();
 const port = 3000;
 
-app.set('view engine', 'ejs');
-app.set('views', path_1.default.join(__dirname, 'templates'));
+// 設定
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "templates"));
 
-app.use(express_1.default.urlencoded({ extended: true }));
-app.use(express_1.default.json());
-const upload = (0, multer_1.default)({ dest: 'uploads/' });
-let dataFilePath;
-let selectedFeatures = [];
-let targetVariable;
-app.get('/', (req, res) => {
-    res.render('index');
-    //res.sendFile(path_1.default.join(__dirname, 'templates/', 'index.html'));
-});
-app.post('/upload', upload.single('file'), (req, res) => {
-    if (req.file) {
-        dataFilePath = req.file.path;
-        res.redirect('/select_variables');
-    }
-    else {
-        res.status(400).send('File upload failed');
-    }
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
+const upload = multer({ dest: "uploads/" });
+
+let dataFilePath = null; // アップロードされたデータファイルのパス
+let selectedFeatures = []; // 選択された特徴量
+let targetVariable = null; // ターゲット変数
+
+// ルートページ
+app.get("/", (req, res) => {
+  res.render("index");
 });
 
-app.get('/select_variables', (req, res) => {
-    console.log(dataFilePath);
+// ファイルアップロード
+app.post("/upload", upload.single("file"), (req, res) => {
+  if (req.file) {
+    dataFilePath = req.file.path;
+    res.redirect("/select_variables");
+  } else {
+    res.status(400).send("File upload failed");
+  }
+});
+
+// 変数選択画面の表示
+app.get("/select_variables", (req, res) => {
+  if (dataFilePath) {
+    exec(`python scripts/get_columns.py ${dataFilePath}`, (error, stdout, stderr) => {
+      if (error) {
+        res.status(500).send(`Error: ${stderr}`);
+      } else {
+        try {
+          const columns = JSON.parse(stdout);
+          res.render("select_variables", { columns });
+        } catch (parseError) {
+          res.status(500).send(`Error parsing JSON: ${parseError.message}`);
+        }
+      }
+    });
+  } else {
+    res.status(400).send("No data file uploaded");
+  }
+});
+
+// 変数選択後の処理
+app.post("/select_variables", (req, res) => {
+  const { features, target } = req.body;
+
+  if (!features || !Array.isArray(features) || features.length === 0) {
+    return res.status(400).send("No features selected");
+  }
+  if (!target) {
+    return res.status(400).send("No target variable selected");
+  }
+
+  selectedFeatures = features;
+  targetVariable = target;
+
+  res.redirect("/process_variables");
+});
+
+// 変数処理画面の表示
+app.get("/process_variables", (req, res) => {
+  if (!dataFilePath) {
+    return res.status(400).send("No data file uploaded");
+  }
+  res.render("process_variables", {
+    features: selectedFeatures,
+    target: targetVariable,
+    missingValues: null,
+  });
+});
+
+// 欠損値処理のエンドポイント修正例
+app.post("/handle_missing", (req, res) => {
     if (dataFilePath) {
-        (0, child_process_1.exec)(`python scripts/get_columns.py ${dataFilePath}`, (error, stdout, stderr) => {
-            if (error) {
-                res.status(500).send(`Error: ${stderr}`);
-            } else {
-                try {
-                    const columns = JSON.parse(stdout);
-                    console.log(columns);
-                    res.render('select_variables', { columns });
-                    // console.log('rendered');
-                } catch (parseError) {
-                    res.status(500).send(`Error parsing JSON: ${parseError.message}`);
-                }
-            }
-        });
+      const missingHandling = req.body;
+  
+      exec(
+        `python scripts/handle_missing.py ${dataFilePath} '${JSON.stringify(missingHandling)}'`,
+        (error, stdout, stderr) => {
+          if (error) {
+            return res.status(500).send(`Error: ${stderr}`);
+          }
+  
+          let missingValues;
+          try {
+            missingValues = JSON.parse(stdout);
+          } catch (err) {
+            return res.status(500).send("Error parsing missing values output");
+          }
+  
+          res.render("process_variables", {
+            missingValues,
+            message1: "欠損値の処理が成功しました。",
+            message2: null,
+            message3: null,
+            features: selectedFeatures,
+            target: targetVariable,
+          });
+        }
+      );
     } else {
-        res.status(400).send('No data file uploaded');
+      res.status(400).send("No data file uploaded");
     }
+  });
+  
+
+app.post("/process_categorical", (req, res) => {
+  if (dataFilePath) {
+    exec(`python scripts/process_categorical.py ${dataFilePath}`, (error, stdout, stderr) => {
+      if (error) {
+        return res.status(500).send(`Error: ${stderr}`);
+      }
+
+      let missingValues;
+      try {
+        missingValues = JSON.parse(stdout);
+      } catch (err) {
+        return res.status(500).send("Error parsing missing values output");
+      }
+
+      res.render("process_variables", {
+        missingValues,
+        message1: null,
+        message2: "ワンホットエンコーディングが成功しました。",
+        message3: null,
+        features: selectedFeatures,
+        target: targetVariable,
+      });
+    });
+  } else {
+    res.status(400).send("No data file uploaded");
+  }
 });
 
-app.post('/select_variables', (req, res) => {
-    //console.log(req.body);
-    selectedFeatures = req.body.features;
-    targetVariable = req.body.target;
-    //console.log(selectedFeatures);
-    //console.log(targetVariable);
-    res.redirect('/process_variables');
-}
-);
+// データ標準化
+app.post("/standardize", (req, res) => {
+  if (!dataFilePath) {
+    return res.status(400).send("No data file uploaded");
+  }
 
-app.get('/process_variables', (req, res) => {
-    if (dataFilePath) {
-        console.log(selectedFeatures);
-        if (!selectedFeatures || !Array.isArray(selectedFeatures) || selectedFeatures.length === 0) {
-            return res.status(400).send('No features selected');
-        }
-
-        if (!targetVariable) {
-            return res.status(400).send('No target variable selected');
-        }
-
-        (0, child_process_1.exec)(`python scripts/process_variables.py ${dataFilePath} ${selectedFeatures.join(',')} ${targetVariable}`, (error, stdout, stderr) => {
-            if (error) {
-                res.status(500).send(`Error: ${stderr}`);
-            } else {
-                const missingValues = JSON.parse(stdout);
-                res.render('process_variables', { missingValues, features: selectedFeatures, target: targetVariable });
-            }
-        });
+  exec(`python scripts/standardize.py ${dataFilePath}`, (error, stdout, stderr) => {
+    if (error) {
+      res.status(500).send(`Error: ${stderr}`);
     } else {
-        res.status(400).send('No data file uploaded');
+      try {
+        const missingValues = JSON.parse(stdout);
+        res.render("process_variables", {
+          missingValues,
+          message3: "標準化が成功しました。",
+          features: selectedFeatures,
+          target: targetVariable,
+        });
+      } catch (err) {
+        res.status(500).send("Error parsing missing values output");
+      }
     }
+  });
 });
 
-app.post('/process_variables', (req, res) => {
-    if (dataFilePath) {
-        const selectedFeatures = req.body.features;
-        const targetVariable = req.body.target;
+// データ正規化
+app.post("/normalize", (req, res) => {
+  if (!dataFilePath) {
+    return res.status(400).send("No data file uploaded");
+  }
 
-        if (!selectedFeatures || !Array.isArray(selectedFeatures) || selectedFeatures.length === 0) {
-            return res.status(400).send('No features selected');
-        }
-
-        if (!targetVariable) {
-            return res.status(400).send('No target variable selected');
-        }
-
-        const featuresString = selectedFeatures.join(',');
-
-        (0, child_process_1.exec)(`python scripts/process_variables.py ${dataFilePath} ${featuresString} ${targetVariable}`, (error, stdout, stderr) => {
-            if (error) {
-                res.status(500).send(`Error: ${stderr}`);
-            } else {
-                const missingValues = JSON.parse(stdout);
-                res.render('process_variables', { missingValues, features: selectedFeatures, target: targetVariable });
-            }
-        });
+  exec(`python scripts/normalize.py ${dataFilePath}`, (error, stdout, stderr) => {
+    if (error) {
+      res.status(500).send(`Error: ${stderr}`);
     } else {
-        res.status(400).send('No data file uploaded');
+      try {
+        const missingValues = JSON.parse(stdout);
+        res.render("process_variables", {
+          missingValues,
+          message3: "正規化が成功しました。",
+          features: selectedFeatures,
+          target: targetVariable,
+        });
+      } catch (err) {
+        res.status(500).send("Error parsing missing values output");
+      }
     }
+  });
 });
 
-app.post('/handle_missing', (req, res) => {
-    if (dataFilePath) {
-        const missingHandling = req.body;
-        (0, child_process_1.exec)(`python scripts/handle_missing.py ${dataFilePath} ${JSON.stringify(missingHandling)}`, (error, stdout, stderr) => {
-            if (error) {
-                res.status(500).send(`Error: ${stderr}`);
-            }
-            else {
-                const missingValues = JSON.parse(stdout);
-                res.render('process_variables', { missingValues, message1: '欠損値の処理が成功しました。', features: selectedFeatures, target: targetVariable });
-            }
-        });
-    }
-    else {
-        res.status(400).send('No data file uploaded');
-    }
+// モデル選択後、トレーニングページへ
+app.post("/select_model", (req, res) => {
+  res.redirect("/train_model");
 });
-app.post('/process_categorical', (req, res) => {
-    if (dataFilePath) {
-        (0, child_process_1.exec)(`python scripts/process_categorical.py ${dataFilePath}`, (error, stdout, stderr) => {
-            if (error) {
-                res.status(500).send(`Error: ${stderr}`);
-            }
-            else {
-                const missingValues = JSON.parse(stdout);
-                res.render('process_variables', { missingValues, message2: 'ワンホットエンコーディングが成功しました。', features: selectedFeatures, target: targetVariable });
-            }
-        });
-    }
-    else {
-        res.status(400).send('No data file uploaded');
-    }
+
+// モデルトレーニング画面表示
+app.get("/train_model", (req, res) => {
+  res.render("train_model");
 });
-app.post('/standardize', (req, res) => {
-    if (dataFilePath) {
-        (0, child_process_1.exec)(`python scripts/standardize.py ${dataFilePath}`, (error, stdout, stderr) => {
-            if (error) {
-                res.status(500).send(`Error: ${stderr}`);
-            }
-            else {
-                const missingValues = JSON.parse(stdout);
-                res.render('process_variables', { missingValues, message3: '標準化が成功しました。', features: selectedFeatures, target: targetVariable });
-            }
-        });
+
+// モデルトレーニング実行
+app.post("/train_model", (req, res) => {
+  if (!dataFilePath || !targetVariable) {
+    return res.status(400).send("No data file or target variable selected");
+  }
+
+  const modelType = req.body.model;
+
+  exec(
+    `python scripts/train_model.py ${dataFilePath} ${selectedFeatures.join(",")} ${targetVariable} ${modelType}`,
+    (error, stdout, stderr) => {
+      if (error) {
+        res.status(500).send(`Error: ${stderr}`);
+      } else {
+        try {
+          const result = JSON.parse(stdout);
+          res.render("results", { model: modelType, score: result.score });
+        } catch (err) {
+          res.status(500).send("Error parsing model training results");
+        }
+      }
     }
-    else {
-        res.status(400).send('No data file uploaded');
-    }
+  );
 });
-app.post('/normalize', (req, res) => {
-    if (dataFilePath) {
-        (0, child_process_1.exec)(`python scripts/normalize.py ${dataFilePath}`, (error, stdout, stderr) => {
-            if (error) {
-                res.status(500).send(`Error: ${stderr}`);
-            }
-            else {
-                const missingValues = JSON.parse(stdout);
-                res.render('process_variables', { missingValues, message3: '正規化が成功しました。', features: selectedFeatures, target: targetVariable });
-            }
-        });
-    }
-    else {
-        res.status(400).send('No data file uploaded');
-    }
-});
-app.post('/select_model', (req, res) => {
-    res.redirect('/train_model');
-});
-app.get('/train_model', (req, res) => {
-    res.sendFile(path_1.default.join(__dirname, 'templates', 'train_model.html'));
-});
-app.post('/train_model', (req, res) => {
-    if (dataFilePath && targetVariable) {
-        const modelType = req.body.model;
-        (0, child_process_1.exec)(`python scripts/train_model.py ${dataFilePath} ${selectedFeatures.join(',')} ${targetVariable} ${modelType}`, (error, stdout, stderr) => {
-            if (error) {
-                res.status(500).send(`Error: ${stderr}`);
-            }
-            else {
-                const result = JSON.parse(stdout);
-                res.render('results', { model: modelType, score: result.score });
-            }
-        });
-    }
-    else {
-        res.status(400).send('No data file or target variable selected');
-    }
-});
+
+// サーバー開始
 app.listen(port, () => {
-    console.log(`Server is running at http://localhost:${port}`);
+  console.log(`Server is running at http://localhost:${port}`);
 });
