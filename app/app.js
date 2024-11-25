@@ -16,11 +16,12 @@ app.set('views', path_1.default.join(__dirname, 'templates'));
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use(express_1.default.json());
 const upload = (0, multer_1.default)({ dest: 'uploads/' });
-let dataFilePath = null;
+let dataFilePath;
 let selectedFeatures = [];
-let targetVariable = null;
+let targetVariable;
 app.get('/', (req, res) => {
-    res.sendFile(path_1.default.join(__dirname, 'templates', 'index.html'));
+    res.render('index');
+    //res.sendFile(path_1.default.join(__dirname, 'templates/', 'index.html'));
 });
 app.post('/upload', upload.single('file'), (req, res) => {
     if (req.file) {
@@ -31,63 +32,87 @@ app.post('/upload', upload.single('file'), (req, res) => {
         res.status(400).send('File upload failed');
     }
 });
+
 app.get('/select_variables', (req, res) => {
+    console.log(dataFilePath);
     if (dataFilePath) {
         (0, child_process_1.exec)(`python scripts/get_columns.py ${dataFilePath}`, (error, stdout, stderr) => {
             if (error) {
                 res.status(500).send(`Error: ${stderr}`);
-            }
-            else {
-                const columns = JSON.parse(stdout);
-                res.render('select_variables', { columns });
+            } else {
+                try {
+                    const columns = JSON.parse(stdout);
+                    console.log(columns);
+                    res.render('select_variables', { columns });
+                    // console.log('rendered');
+                } catch (parseError) {
+                    res.status(500).send(`Error parsing JSON: ${parseError.message}`);
+                }
             }
         });
-    }
-    else {
+    } else {
         res.status(400).send('No data file uploaded');
     }
 });
 
 app.post('/select_variables', (req, res) => {
+    //console.log(req.body);
     selectedFeatures = req.body.features;
     targetVariable = req.body.target;
+    //console.log(selectedFeatures);
+    //console.log(targetVariable);
     res.redirect('/process_variables');
 }
 );
 
 app.get('/process_variables', (req, res) => {
     if (dataFilePath) {
+        console.log(selectedFeatures);
+        if (!selectedFeatures || !Array.isArray(selectedFeatures) || selectedFeatures.length === 0) {
+            return res.status(400).send('No features selected');
+        }
+
+        if (!targetVariable) {
+            return res.status(400).send('No target variable selected');
+        }
+
         (0, child_process_1.exec)(`python scripts/process_variables.py ${dataFilePath} ${selectedFeatures.join(',')} ${targetVariable}`, (error, stdout, stderr) => {
             if (error) {
                 res.status(500).send(`Error: ${stderr}`);
-            }
-            else {
+            } else {
                 const missingValues = JSON.parse(stdout);
                 res.render('process_variables', { missingValues, features: selectedFeatures, target: targetVariable });
             }
         });
-    }
-    else {
+    } else {
         res.status(400).send('No data file uploaded');
     }
-}
-);
+});
 
 app.post('/process_variables', (req, res) => {
     if (dataFilePath) {
-        selectedFeatures = req.body.features;
-        targetVariable = req.body.target;
-        (0, child_process_1.exec)(`python scripts/process_variables.py ${dataFilePath} ${selectedFeatures.join(',')} ${targetVariable}`, (error, stdout, stderr) => {
+        const selectedFeatures = req.body.features;
+        const targetVariable = req.body.target;
+
+        if (!selectedFeatures || !Array.isArray(selectedFeatures) || selectedFeatures.length === 0) {
+            return res.status(400).send('No features selected');
+        }
+
+        if (!targetVariable) {
+            return res.status(400).send('No target variable selected');
+        }
+
+        const featuresString = selectedFeatures.join(',');
+
+        (0, child_process_1.exec)(`python scripts/process_variables.py ${dataFilePath} ${featuresString} ${targetVariable}`, (error, stdout, stderr) => {
             if (error) {
                 res.status(500).send(`Error: ${stderr}`);
-            }
-            else {
+            } else {
                 const missingValues = JSON.parse(stdout);
                 res.render('process_variables', { missingValues, features: selectedFeatures, target: targetVariable });
             }
         });
-    }
-    else {
+    } else {
         res.status(400).send('No data file uploaded');
     }
 });

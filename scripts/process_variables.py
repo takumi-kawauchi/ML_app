@@ -23,4 +23,4 @@ if __name__ == "__main__":
     target = sys.argv[3]
 
     missing_values = process_variables(csv_file_path, features, target)
-    print(json.dumps(missing_values))
+    # print(json.dumps(missing_values))

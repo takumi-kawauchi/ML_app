@@ -118,28 +118,28 @@
                 <th>欠損値の数</th>
                 <th>処理方法</th>
             </tr>
-            {% for feature, missing_count in missingValues.items() %}
+            <% for (let feature in missingValues) { %>
                 <tr>
-                    <td>{{ feature }}</td>
-                    <td>{{ missing_count }}</td>
+                    <td><%= feature %></td>
+                    <td><%= missingValues[feature] %></td>
                     <td>
                         <label>
-                            <input type="radio" name="missing_{{ feature }}" value="mean"> 平均値で補完
+                            <input type="radio" name="missing_<%= feature %>" value="mean"> 平均値で補完
                         </label>
                         <label>
-                            <input type="radio" name="missing_{{ feature }}" value="delete"> 削除
+                            <input type="radio" name="missing_<%= feature %>" value="delete"> 削除
                         </label>
                     </td>
                 </tr>
-            {% endfor %}
+            <% } %>
         </table>
         <button type="submit">欠損値処理を実行</button>
     </form>
 
     <!-- メッセージ表示セクション -->
-    {% if message1 %}
-        <p class="message">{{ message1 }}</p>
-    {% endif %}
+    <% if (message1) { %>
+        <p class="message"><%= message1 %></p>
+    <% } %>
 
     <!-- カテゴリカル変数の処理 -->
     <h2>カテゴリカル変数の処理</h2>
@@ -149,9 +149,9 @@
     </form>
 
     <!-- メッセージ表示セクション -->
-    {% if message2 %}
-        <p class="message">{{ message2 }}</p>
-    {% endif %}
+    <% if (message2) { %>
+        <p class="message"><%= message2 %></p>
+    <% } %>
 
     <!-- 標準化・正規化処理 -->
     <h3>データの標準化または正規化</h3>
@@ -166,9 +166,9 @@
     </form>
 
     <!-- メッセージ表示セクション -->
-    {% if message3 %}
-        <p class="message">{{ message3 }}</p>
-    {% endif %}
+    <% if (message3) { %>
+        <p class="message"><%= message3 %></p>
+    <% } %>
 
     <!-- モデル選択に進むボタン -->
     <form action="/select_model" method="post">

@@ -8,6 +8,7 @@
     "start": "tsc && node app/app.js"
   },
   "dependencies": {
+    "ejs": "^3.1.10",
     "express": "^4.17.1",
     "multer": "^1.4.4"
   },
